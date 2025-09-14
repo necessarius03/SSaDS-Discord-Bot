@@ -1,0 +1,41 @@
+app = "citizen-scoring-bot"
+primary_region = "sin"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  LOG_LEVEL = "info"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[services]]
+  internal_port = 3000
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = "80"
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = "443"
+
+[[services.http_checks]]
+  interval = 60000
+  timeout = 10000
+  grace_period = 30000
+  method = "GET"
+  path = "/health"
+
+[deploy]
+  release_command = "npx prisma migrate deploy"
+
+[[mounts]]
+  source = "logs_volume"
+  destination = "/app/logs"

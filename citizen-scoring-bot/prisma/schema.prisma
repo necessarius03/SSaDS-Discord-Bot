@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id
+  username      String
+  discriminator String
+  displayName   String?
+  joinedAt      DateTime @default(now())
+  lastActive    DateTime @default(now())
+  
+  // Scoring
+  totalPoints   Int      @default(0)
+  level         Int      @default(1)
+  experience    Int      @default(0)
+  
+  // Statistics
+  messagesCount    Int @default(0)
+  voiceMinutes     Int @default(0)
+  reactionsGiven   Int @default(0)
+  reactionsReceived Int @default(0)
+  reportsReceived  Int @default(0)
+  
+  // Relations
+  pointHistories PointHistory[]
+  badges        UserBadge[]
+  donationsGiven PointDonation[] @relation("DonationsGiven")
+  donationsReceived PointDonation[] @relation("DonationsReceived")
+  vouches       Vouch[] @relation("Vouches")
+  vouchedBy     Vouch[] @relation("VouchedBy")
+  
+  @@map("users")
+}
+
+model PointHistory {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  points      Int
+  reason      String
+  category    PointCategory
+  createdAt   DateTime @default(now())
+  adminId     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("point_histories")
+}
+
+model Badge {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String
+  icon        String
+  rarity      BadgeRarity @default(COMMON)
+  requirement String // JSON string describing requirements
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  
+  users UserBadge[]
+  
+  @@map("badges")
+}
+
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model PointDonation {
+  id          Int      @id @default(autoincrement())
+  fromUserId  String
+  toUserId    String
+  points      Int
+  message     String?
+  createdAt   DateTime @default(now())
+  
+  fromUser User @relation("DonationsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("DonationsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+  
+  @@map("point_donations")
+}
+
+model Vouch {
+  id         Int      @id @default(autoincrement())
+  voucherId  String
+  vouchedId  String
+  reason     String
+  createdAt  DateTime @default(now())
+  isActive   Boolean  @default(true)
+  
+  voucher User @relation("Vouches", fields: [voucherId], references: [id], onDelete: Cascade)
+  vouched User @relation("VouchedBy", fields: [vouchedId], references: [id], onDelete: Cascade)
+  
+  @@unique([voucherId, vouchedId])
+  @@map("vouches")
+}
+
+model Challenge {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  targetPoints Int
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean   @default(true)
+  reward      String
+  createdAt   DateTime  @default(now())
+  
+  @@map("challenges")
+}
+
+model ServerConfig {
+  id    String @id @default("main")
+  key   String @unique
+  value String
+  
+  @@map("server_config")
+}
+
+enum PointCategory {
+  MESSAGE
+  QUALITY_MESSAGE
+  REACTION_BONUS
+  VOICE_ACTIVITY
+  HELPING_OTHERS
+  SPAM_PENALTY
+  GHOST_VOICE_PENALTY
+  REPORT_PENALTY
+  LEAK_PENALTY
+  ADMIN_ADJUSTMENT
+  DONATION
+  CHALLENGE_REWARD
+}
+
+enum BadgeRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
