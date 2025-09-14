@@ -1,6 +1,7 @@
 import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
 import { readdirSync } from 'fs';
 import { join } from 'path';
+import * as http from 'http';
 import { config } from './utils/config';
 import { database } from './utils/database';
 import { logger } from './utils/logger';
@@ -85,6 +86,30 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
+function createHealthServer() {
+  const server = http.createServer((req, res) => {
+    if (req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'healthy',
+        bot: client.isReady() ? 'connected' : 'disconnected',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      }));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found');
+    }
+  });
+
+  const port = process.env.PORT || 3000;
+  server.listen(port, () => {
+    logger.info(`Health check server running on port ${port}`);
+  });
+
+  return server;
+}
+
 async function startBot() {
   try {
     await database.connect();
@@ -95,6 +120,9 @@ async function startBot() {
 
     await client.login(config.discord.token);
     logger.info('Bot started successfully');
+
+    // Start health check server
+    createHealthServer();
   } catch (error) {
     logger.error('Error starting bot:', error);
     process.exit(1);
