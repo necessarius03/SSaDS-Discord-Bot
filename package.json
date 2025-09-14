@@ -1,0 +1,13 @@
+{
+  "name": "ssads-discord-bot-root",
+  "version": "1.0.0",
+  "description": "Root package for SSaDS Discord Bot",
+  "scripts": {
+    "build": "cd citizen-scoring-bot && npm ci && npx prisma generate && npm run build",
+    "start": "cd citizen-scoring-bot && npm start",
+    "dev": "cd citizen-scoring-bot && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
