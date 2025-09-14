@@ -3,7 +3,7 @@ services:
   - type: web
     name: ssads-discord-bot
     env: docker
-    rootDir: ./citizen-scoring-bot
+    rootDir: citizen-scoring-bot
     envVars:
       - key: NODE_ENV
         value: production
