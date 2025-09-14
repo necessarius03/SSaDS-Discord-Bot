@@ -3,7 +3,7 @@ import { logger } from './logger';
 
 class DatabaseService {
   private static instance: DatabaseService;
-  public prisma: PrismaClient; 
+  public prisma: PrismaClient;
 
   private constructor() {
     this.prisma = new PrismaClient({

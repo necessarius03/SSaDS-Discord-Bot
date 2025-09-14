@@ -5,17 +5,12 @@ WORKDIR /app
 # Install dependencies for Prisma and PostgreSQL
 RUN apk add --no-cache libc6-compat openssl
 
-# Copy package files from the citizen-scoring-bot directory
+# Copy package files and prisma schema BEFORE npm ci
 COPY citizen-scoring-bot/package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy Prisma schema
 COPY citizen-scoring-bot/prisma ./prisma/
 
-# Generate Prisma client
-RUN npx prisma generate
+# Install dependencies (this will run prisma generate via postinstall)
+RUN npm ci
 
 # Copy source code
 COPY citizen-scoring-bot/src ./src/
