@@ -2,32 +2,17 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies for Prisma and PostgreSQL
+# Install system dependencies
 RUN apk add --no-cache libc6-compat openssl
 
-# Copy package files and prisma schema BEFORE npm ci
-COPY citizen-scoring-bot/package*.json ./
-COPY citizen-scoring-bot/prisma ./prisma/
+# Copy everything from citizen-scoring-bot at once
+COPY citizen-scoring-bot/ ./
 
-# Install dependencies (this will run prisma generate via postinstall)
+# Install dependencies
 RUN npm ci
 
-# Copy source code
-COPY citizen-scoring-bot/src ./src/
-COPY citizen-scoring-bot/tsconfig.json ./
-
-# Build the application
+# Build
 RUN npm run build
 
-# Create logs directory
-RUN mkdir -p logs
-
-# Expose port for health check
-EXPOSE 3000
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Start the application
+# Start
 CMD ["npm", "start"]
