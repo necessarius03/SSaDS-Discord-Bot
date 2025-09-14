@@ -5,17 +5,20 @@ WORKDIR /app
 # Install system dependencies
 RUN apk add --no-cache libc6-compat openssl
 
-# Force cache bust
-RUN echo "Build timestamp: $(date)" > /tmp/buildtime
-
 # Copy everything from citizen-scoring-bot directory
 COPY citizen-scoring-bot/ ./
 
-# Install dependencies
+# Install ALL dependencies (including dev deps for TypeScript)
 RUN npm ci
 
-# Build the application
-RUN npm run build
+# Generate Prisma client manually (after all files are copied)
+RUN npx prisma generate
+
+# Build TypeScript
+RUN npx tsc
+
+# Remove dev dependencies after build
+RUN npm prune --production
 
 # Create logs directory
 RUN mkdir -p logs
